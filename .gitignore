@@ -1,0 +1,2 @@
+# Exclude everything except a specific directory foo/bar
+target/
