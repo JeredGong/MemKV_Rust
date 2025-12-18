@@ -164,6 +164,7 @@ fn cli_log_configuration() {
         .unwrap();
     thread::sleep(Duration::from_secs(1));
     child.kill().expect("server exited before killed");
+    let _ = child.wait();
 
     let content = fs::read_to_string(&stderr_path).expect("unable to read from stderr file");
     assert!(content.contains(env!("CARGO_PKG_VERSION")));
@@ -184,6 +185,7 @@ fn cli_wrong_engine() {
             .unwrap();
         thread::sleep(Duration::from_secs(1));
         child.kill().expect("server exited before killed");
+        let _ = child.wait();
 
         let mut cmd = Command::cargo_bin("kvs-server").unwrap();
         cmd.args(&["--engine", "kvs", "--addr", "127.0.0.1:4003"])
@@ -203,6 +205,7 @@ fn cli_wrong_engine() {
             .unwrap();
         thread::sleep(Duration::from_secs(1));
         child.kill().expect("server exited before killed");
+        let _ = child.wait();
 
         let mut cmd = Command::cargo_bin("kvs-server").unwrap();
         cmd.args(&["--engine", "sled", "--addr", "127.0.0.1:4003"])
@@ -224,7 +227,7 @@ fn cli_access_server(engine: &str, addr: &str) {
     let handle = thread::spawn(move || {
         let _ = receiver.recv(); // wait for main thread to finish
         child.kill().expect("server exited before killed");
-        child.wait();
+        let _ = child.wait();
     });
     thread::sleep(Duration::from_secs(1));
 
@@ -306,6 +309,7 @@ fn cli_access_server(engine: &str, addr: &str) {
     let handle = thread::spawn(move || {
         let _ = receiver.recv(); // wait for main thread to finish
         child.kill().expect("server exited before killed");
+        let _ = child.wait();
     });
     thread::sleep(Duration::from_secs(1));
 

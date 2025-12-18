@@ -16,21 +16,21 @@ impl SledKvsEngine {
 }
 
 impl KvsEngine for SledKvsEngine {
-    fn set(&mut self, key: Bytes, value: Bytes) -> io::Result<()> {
+    fn set(&self, key: Bytes, value: Bytes) -> io::Result<()> {
         let tree: &Tree = &self.0;
         tree.insert(key.to_vec(), value.to_vec()).map(|_| ())?;
         tree.flush()?;
         Ok(())
     }
 
-    fn get(&mut self, key: Bytes) -> io::Result<Option<Bytes>> {
+    fn get(&self, key: Bytes) -> io::Result<Option<Bytes>> {
         let tree: &Tree = &self.0;
         Ok(tree
             .get(key.to_vec())?
             .map(|ivec| Bytes::copy_from_slice(ivec.as_ref())))
     }
 
-    fn remove(&mut self, key: Bytes) -> io::Result<()> {
+    fn remove(&self, key: Bytes) -> io::Result<()> {
         let tree: &Tree = &self.0;
         tree
             .remove(key.to_vec())?

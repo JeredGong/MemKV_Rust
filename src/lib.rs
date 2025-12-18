@@ -15,7 +15,8 @@ pub mod index;
 pub mod options;
 /// engines模块
 pub mod engines;
-
+/// 线程池模块
+pub mod thread_pool;
 
 mod kv;
 mod error;

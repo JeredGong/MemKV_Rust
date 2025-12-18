@@ -17,6 +17,7 @@ use std::collections::HashSet;
 use super::KvsEngine;
 /// Engine 数据结构
 /// 
+#[derive(Clone)]
 pub struct KVEngine {
     options: Options,
     
@@ -29,16 +30,16 @@ pub struct KVEngine {
     older_files: Arc<RwLock<HashMap<u32, DataFile>>>,
     
     /// 内存索引：将 Key 映射到磁盘位置
-    index: Box<dyn Indexer>,
+    index: Arc<dyn Indexer>,
     
     /// 记录所有文件 ID，用于加载索引和合并
-    file_ids: RwLock<Vec<u32>>,
+    file_ids: Arc<RwLock<Vec<u32>>>,
 
     /// 记录每个文件的无效字节数 (FileID -> Invalid Bytes)
-    file_reclaim_size: RwLock<HashMap<u32, u64>>,
+    file_reclaim_size: Arc<RwLock<HashMap<u32, u64>>>,
 
     /// 标记是否有合并正在进行，CAS 防止并发合并
-    merge_running: AtomicBool,
+    merge_running: Arc<AtomicBool>,
 }
 
 impl KVEngine {
@@ -77,17 +78,17 @@ impl KVEngine {
         let file_ids = RwLock::new(file_ids);
         // 4. 初始化索引
         // 这里根据配置选择具体的索引实现，目前我们只有 HashIndexer
-        let index: Box<dyn Indexer> = Box::new(index::hash::HashIndexer::new());
-        let file_reclaim_size = RwLock::new(HashMap::new());
+        let index: Arc<dyn Indexer> = Arc::new(index::hash::HashIndexer::new());
+        let file_reclaim_size = Arc::new(RwLock::new(HashMap::new()));
         // 5. 构造 Engine 实例
         let engine = Self {
             options: opts,
             active_file: Arc::new(active_file.unwrap()),
             older_files: Arc::new(RwLock::new(older_files)),
             index,
-            file_ids,
+            file_ids: Arc::new(file_ids),
             file_reclaim_size,
-            merge_running: AtomicBool::new(false),
+            merge_running: Arc::new(AtomicBool::new(false)),
         };
 
         // 6. 从文件加载索引 (Crash Recovery)
@@ -639,13 +640,13 @@ fn load_data_file_ids(dir_path: &Path) -> io::Result<Vec<u32>> {
 
 
 impl KvsEngine for KVEngine{
-    fn set(&mut self, key: Bytes, value: Bytes) -> io::Result<()> {
+    fn set(&self, key: Bytes, value: Bytes) -> io::Result<()> {
         self.put(key, value)
     }
-    fn get(&mut self, key: Bytes) -> io::Result<Option<Bytes>> {
+    fn get(&self, key: Bytes) -> io::Result<Option<Bytes>> {
         KVEngine::get(self, key)
     }
-    fn remove(&mut self, key: Bytes) -> io::Result<()> {
+    fn remove(&self, key: Bytes) -> io::Result<()> {
         self.delete(key)
     }
 }
